@@ -1,6 +1,6 @@
 # 4. Qué se comprueba
 
-El laboratorio existe para comprobar en local cinco comportamientos que en producción se dan por
+El laboratorio existe para comprobar en local seis comportamientos que en producción se dan por
 hechos. Cada uno tiene un comando que lo provoca y un resultado que dice si se cumple.
 
 | # | Comportamiento | Dónde está | Diagrama |
@@ -10,6 +10,7 @@ hechos. Cada uno tiene un comando que lo provoca y un resultado que dice si se c
 | 3 | Un despliegue nunca deja la API con menos réplicas listas que las declaradas | `charts/whoami/templates/deployment.yaml` | [05](diagrams/README.md#05--rolling-update-sin-pérdida-de-servicio) |
 | 4 | Un commit es la única forma de cambiar lo desplegado | `argocd/application.yaml` | [04](diagrams/README.md#04--ciclo-de-vida-de-la-application) |
 | 5 | Volver atrás es revertir un commit | `argocd/application.yaml` | [04](diagrams/README.md#04--ciclo-de-vida-de-la-application) |
+| 6 | La puerta de entrada protege la API | `charts/whoami/templates/middlewares.yaml` | [01](diagrams/README.md#01--arquitectura-del-laboratorio) |
 
 ## 1. Orden de arranque de Compose
 
@@ -99,6 +100,19 @@ sincronización, y `argocd app rollback` se niega mientras la sincronización au
 con `rollback cannot be initiated when auto-sync is enabled`.
 El historial de Git es el historial de despliegues.
 
+## 6. La puerta de entrada protege la API
+
+```bash
+for i in $(seq 1 30); do curl -s -o /dev/null -w '%{http_code}\n' http://whoami.localhost/; done | sort | uniq -c
+curl -s -A 'navegador-de-prueba' http://whoami.localhost/ | grep -i -E 'user-agent|x-forwarded-for|x-real-ip'
+curl -sk -o /dev/null -w '%{http_code}\n' https://whoami.localhost/
+```
+
+**Se cumple si** de las 30 peticiones pasan unas 14 y el resto recibe `429`; la respuesta de whoami
+no contiene el `User-Agent` enviado (aparece el `Go-http-client/1.1` del proxy) ni `X-Forwarded-For`
+ni `X-Real-Ip`; y HTTPS responde `200` con el certificado autofirmado de Traefik. Cada petición deja
+una línea en `kubectl -n traefik logs deploy/traefik`.
+
 ## Datos del entorno en el que se probó
 
 | Pieza | Versión |
@@ -107,6 +121,7 @@ El historial de Git es el historial de despliegues.
 | Docker Engine | 29.8 |
 | Helm | 4.3.1 |
 | Chart `argo/argo-cd` | 10.10.0 (Argo CD 3.5.4) |
+| Chart `traefik/traefik` | 41.7.1 (Traefik 3.7.14) |
 | Redis · MongoDB · SQL Server | 8.10 · 8.0 · 2022 CU27 |
 | whoami | v1.11.0 y v1.12.0 |
 

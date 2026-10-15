@@ -23,8 +23,9 @@ autocontenidos: también funcionan descargados, sin dependencias externas.
 ## 01 · Arquitectura del laboratorio
 
 El Mac con Docker Desktop, el proyecto de Compose con sus tres bases de datos, el clúster de
-Kubernetes con los namespaces `argocd` y `lab`, y el repositorio de GitHub del que Argo CD lee el
-chart.
+Kubernetes con los namespaces `traefik`, `argocd` y `lab`, y el repositorio de GitHub del que Argo CD
+lee el chart. Traefik recibe el tráfico de `localhost:80` y `:443` y lo pasa por el rate limit y las
+cabeceras de privacidad antes de llegar a la API.
 
 [![Arquitectura del laboratorio](previews/01-arquitectura-laboratorio.png)](https://jmrg-link.github.io/gitops-lab/diagrams/01-arquitectura-laboratorio.html)
 
