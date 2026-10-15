@@ -1,6 +1,6 @@
 # 4. Qué se comprueba
 
-El laboratorio existe para comprobar en local seis comportamientos que en producción se dan por
+El laboratorio existe para comprobar en local siete comportamientos que en producción se dan por
 hechos. Cada uno tiene un comando que lo provoca y un resultado que dice si se cumple.
 
 | # | Comportamiento | Dónde está | Diagrama |
@@ -11,6 +11,7 @@ hechos. Cada uno tiene un comando que lo provoca y un resultado que dice si se c
 | 4 | Un commit es la única forma de cambiar lo desplegado | `argocd/application.yaml` | [04](diagrams/README.md#04--ciclo-de-vida-de-la-application) |
 | 5 | Volver atrás es revertir un commit | `argocd/application.yaml` | [04](diagrams/README.md#04--ciclo-de-vida-de-la-application) |
 | 6 | La puerta de entrada protege la API | `charts/whoami/templates/middlewares.yaml` | [01](diagrams/README.md#01--arquitectura-del-laboratorio) |
+| 7 | Una API con estado se despliega igual | `charts/nest-hexagonal` | [01](diagrams/README.md#01--arquitectura-del-laboratorio) |
 
 ## 1. Orden de arranque de Compose
 
@@ -113,6 +114,16 @@ no contiene el `User-Agent` enviado (aparece el `Go-http-client/1.1` del proxy) 
 ni `X-Real-Ip`; y HTTPS responde `200` con el certificado autofirmado de Traefik. Cada petición deja
 una línea en `kubectl -n traefik logs deploy/traefik`.
 
+## 7. Una API con estado se despliega igual
+
+El mismo flujo de Git, Argo CD y Traefik con la API NestJS, que guarda usuarios en MongoDB. Los
+comandos están en la [guía 6](06-api-nestjs.md#4-probarla).
+
+**Se cumple si** la Application `nest` está `Synced` y `Healthy`, `POST /graphql` responde por
+`http://` y `https://nest.localhost`, el registro devuelve `201`, el login un `accessToken`,
+`/auth/me` el email con el rol `customer`, y el usuario aparece en la base `nest-k8s` del Mongo del
+Compose.
+
 ## Datos del entorno en el que se probó
 
 | Pieza | Versión |
@@ -124,6 +135,7 @@ una línea en `kubectl -n traefik logs deploy/traefik`.
 | Chart `traefik/traefik` | 41.7.1 (Traefik 3.7.14) |
 | Redis · MongoDB · SQL Server | 8.10 · 8.0 · 2022 CU27 |
 | whoami | v1.11.0 y v1.12.0 |
+| Imagen base de la API NestJS | `node:24.22.0-bookworm-slim` |
 
 Con todo en marcha (Compose, el clúster y Argo CD), los contenedores ocupan unos 2 GiB de los 7,75
 de la máquina virtual de Docker.

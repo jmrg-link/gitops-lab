@@ -29,8 +29,11 @@ paquete que Kubernetes sepa desplegar sin cortes, una puerta de entrada que reci
 forma de que el clúster refleje siempre lo que hay en el repositorio. Este laboratorio monta las
 cuatro cosas en un Mac con Docker Desktop.
 
-La API es [traefik/whoami](https://github.com/traefik/whoami), que responde con el nombre del pod
-que atiende la petición: se ve en cada momento qué versión y qué réplica contesta.
+La API de pruebas es [traefik/whoami](https://github.com/traefik/whoami), que responde con el nombre
+del pod que atiende la petición: se ve en cada momento qué versión y qué réplica contesta. Con el
+mismo flujo se despliega además una API real,
+[nest-hexagonal-adapters](https://github.com/jmrg-link/nest-hexagonal-adapters), con autenticación
+JWT y MongoDB.
 
 [![Arquitectura del laboratorio](docs/diagrams/previews/01-arquitectura-laboratorio.png)](docs/diagrams/README.md)
 
@@ -39,6 +42,7 @@ que atiende la petición: se ve en cada momento qué versión y qué réplica co
 | `compose.yml` | Docker Compose | Redis, MongoDB y SQL Server para desarrollar contra localhost, con la API detrás |
 | `charts/whoami` | Kubernetes, namespace `lab` | La API empaquetada: Job de migraciones, Deployment con rolling update y Service |
 | `traefik/` | Kubernetes, namespace `traefik` | Traefik como ingress controller en `localhost:80` y `:443`, con su panel de gestión |
+| `charts/nest-hexagonal` + `apps/nest-hexagonal` | Kubernetes, namespace `nest` | La API NestJS: imagen construida en local, Deployment, Service y rutas en `nest.localhost` |
 | `argocd/` | Kubernetes, namespace `argocd` | Argo CD instalado con su chart y la Application que despliega el chart desde este repositorio |
 
 ## Qué se comprueba
@@ -54,6 +58,7 @@ tiene el comando que lo provoca y el resultado que dice si se cumple.
 | 4 | Solo un commit cambia lo desplegado | Un `kubectl scale` a mano se deshace solo en segundos |
 | 5 | Volver atrás es revertir un commit | `git revert` restaura la versión; `argocd app rollback` se niega |
 | 6 | La puerta de entrada protege la API | 30 peticiones seguidas: unas 14 pasan y el resto recibe `429`; la API no ve la IP ni el navegador del cliente |
+| 7 | Una API con estado funciona igual | Registro, login y `/auth/me` por `https://nest.localhost` y el usuario guardado en MongoDB |
 
 ## Arranque rápido
 
@@ -99,6 +104,7 @@ argocd admin initial-password -n argocd
 | SQL Server | `localhost:1433`, usuario `sa` |
 | Panel de Traefik | <http://traefik.localhost/dashboard/> (con la barra final) |
 | API desplegada por Argo CD | <http://whoami.localhost/> y <https://whoami.localhost/> (certificado autofirmado) |
+| API NestJS | `POST` a <https://nest.localhost/graphql> y rutas `/auth/...`; la raíz responde 404 |
 | Argo CD | <http://localhost:8080> con el port-forward |
 
 ## Documentación
@@ -108,8 +114,9 @@ argocd admin initial-password -n argocd
 | 1 | [Docker Compose](docs/01-docker-compose.md) | Servicios, orden de arranque y por qué cada base está configurada así |
 | 2 | [El chart de Helm](docs/02-chart-helm.md) | Valores, rolling update, migraciones como hook y qué hace (y qué no) un rollback |
 | 3 | [GitOps con Argo CD](docs/03-argocd-gitops.md) | Instalación, la Application, cinco experimentos y la limpieza |
-| 4 | [Qué se comprueba](docs/04-que-se-comprueba.md) | Los seis comportamientos, cómo provocarlos y cómo saber si se cumplen |
+| 4 | [Qué se comprueba](docs/04-que-se-comprueba.md) | Los siete comportamientos, cómo provocarlos y cómo saber si se cumplen |
 | 5 | [Traefik](docs/05-traefik.md) | Ingress controller, panel, rutas HTTP y HTTPS, rate limit, cabeceras de privacidad y access log |
+| 6 | [API NestJS](docs/06-api-nestjs.md) | Imagen local, secreto fuera de Git, MongoDB desde el clúster y prueba de autenticación de punta a punta |
 
 Material visual:
 
@@ -133,11 +140,16 @@ gitops-lab/
 │       └── migrate-job.yaml    Migraciones antes de instalar o actualizar
 ├── traefik/
 │   └── values-local.yaml       Traefik con el panel en traefik.localhost y access log
+├── apps/nest-hexagonal/
+│   ├── Dockerfile              Imagen de la API NestJS, con el clon de la API como contexto
+│   └── Dockerfile.dockerignore Lo que no entra en la imagen
+├── charts/nest-hexagonal/      Chart de la API NestJS: Deployment, Service e IngressRoutes
 ├── argocd/
 │   ├── values-local.yaml       Argo CD mínimo para local
-│   └── application.yaml        Despliega charts/whoami desde este repositorio
+│   ├── application.yaml        Despliega charts/whoami desde este repositorio
+│   └── application-nest.yaml   Despliega charts/nest-hexagonal
 └── docs/
-    ├── 01…05-*.md              Guías paso a paso
+    ├── 01…06-*.md              Guías paso a paso
     ├── diagrams/               Diagramas interactivos autocontenidos y sus miniaturas
     └── index.html              Portada de GitHub Pages
 ```
@@ -153,11 +165,11 @@ Engine 29.8.
 ## Limpieza
 
 ```bash
-kubectl delete -f argocd/application.yaml   # antes que Argo CD: su finalizer lo necesita
+kubectl delete -f argocd/application.yaml -f argocd/application-nest.yaml   # antes que Argo CD
 helm uninstall argocd -n argocd
 helm uninstall traefik -n traefik
-kubectl delete namespace argocd lab traefik
-docker compose down -v
+kubectl delete namespace argocd lab traefik nest
+docker compose down -v   # borra también las bases de cualquier otra app conectada a este Mongo
 ```
 
 ## Autor

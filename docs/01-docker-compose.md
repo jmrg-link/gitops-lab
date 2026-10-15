@@ -74,3 +74,8 @@ expanda el shell del contenedor y no Compose al leer el fichero.
 docker compose down        # para los contenedores y conserva los datos
 docker compose down -v     # además borra los volúmenes
 ```
+
+El Mongo de este Compose escucha en `localhost:27017`, así que cualquier aplicación del equipo que
+apunte ahí guarda sus datos en el mismo volumen; la API NestJS del clúster usa la base `nest-k8s`.
+Antes de un `down -v`, mira qué bases hay con
+`docker compose exec -T mongo mongosh --quiet --eval 'db.getMongo().getDBNames()'`.
