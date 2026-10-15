@@ -9,6 +9,8 @@
 #   http://traefik.localhost/dashboard/ (la barra final es obligatoria).
 # - Sin autenticación: el panel enseña toda la configuración de enrutado. No sirve para
 #   producción; allí va detrás de un middleware de autenticación y con TLS.
+# - El access log escribe una línea por petición en la salida del pod:
+#   `kubectl -n traefik logs deploy/traefik -f`.
 #
 # @example
 #   helm install traefik traefik/traefik --version 41.7.1 -n traefik --create-namespace -f traefik/values-local.yaml --wait
@@ -22,3 +24,7 @@ ingressRoute:
     matchRule: Host(`traefik.localhost`)
     # -- Entrypoint HTTP publicado en el puerto 80 de localhost.
     entryPoints: ["web"]
+
+accessLog:
+  # -- Registra cada petición que atiende Traefik.
+  enabled: true

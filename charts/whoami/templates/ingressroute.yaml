@@ -1,29 +1,41 @@
 {{- /*
 @file charts/whoami/templates/ingressroute.yaml
 
-IngressRoute de Traefik que publica la API fuera del clúster por un nombre de host.
+IngressRoutes de Traefik que publican la API fuera del clúster por un nombre de host, uno por
+entrypoint de `ingress.entryPoints`.
 
 - Necesita los CRD de Traefik instalados en el clúster (chart traefik/traefik).
-- Enruta el entrypoint `web` al Service de la API; Traefik solo envía tráfico a los pods que
-  pasan la readiness, igual que el Service.
+- `websecure` (443) termina TLS con el certificado por defecto de Traefik, autofirmado: el
+  navegador avisa y `curl` necesita `-k`. `web` (80) sirve HTTP sin cifrar.
+- Una ruta con `tls` solo atiende peticiones TLS, por eso cada entrypoint tiene su IngressRoute.
+- Traefik solo envía tráfico a los pods que pasan la readiness, igual que el Service.
 - Con `ingress.enabled: false` no se genera nada y la API solo es accesible dentro del clúster.
 
 @see https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/
 */ -}}
 {{- if .Values.ingress.enabled }}
+{{- range $entryPoint := .Values.ingress.entryPoints }}
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ include "whoami.fullname" . }}
+  name: {{ include "whoami.fullname" $ }}-{{ $entryPoint }}
   labels:
-    {{- include "whoami.labels" . | nindent 4 }}
+    {{- include "whoami.labels" $ | nindent 4 }}
 spec:
   entryPoints:
-    {{- toYaml .Values.ingress.entryPoints | nindent 4 }}
+    - {{ $entryPoint }}
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`)
+    - match: Host(`{{ $.Values.ingress.host }}`)
       kind: Rule
+      middlewares:
+        - name: {{ include "whoami.fullname" $ }}-ratelimit
+        - name: {{ include "whoami.fullname" $ }}-privacy
       services:
-        - name: {{ include "whoami.fullname" . }}
-          port: {{ .Values.service.port }}
+        - name: {{ include "whoami.fullname" $ }}
+          port: {{ $.Values.service.port }}
+  {{- if eq $entryPoint "websecure" }}
+  tls: {}
+  {{- end }}
+{{- end }}
 {{- end }}

@@ -33,8 +33,27 @@ ingress:
   enabled: true
   # -- Nombre por el que se llega a la API; `*.localhost` resuelve a 127.0.0.1.
   host: whoami.localhost
-  # -- Entrypoints de Traefik que atienden la ruta.
-  entryPoints: ["web"]
+  # -- Entrypoints de Traefik que atienden la ruta: `web` (80) y `websecure` (443).
+  entryPoints: ["web", "websecure"]
+  rateLimit:
+    # -- Peticiones por segundo permitidas de media a cada IP de origen.
+    average: 5
+    # -- Ráfaga máxima que se admite por encima de la media antes de responder 429.
+    burst: 10
+  # -- Cabeceras de la petición que Traefik borra antes de reenviarla a la API.
+  stripRequestHeaders:
+    - User-Agent
+    - Accept-Language
+    - Sec-Ch-Ua
+    - Sec-Ch-Ua-Mobile
+    - Sec-Ch-Ua-Platform
+    - Sec-Fetch-Dest
+    - Sec-Fetch-Mode
+    - Sec-Fetch-Site
+    - Sec-Fetch-User
+    - X-Forwarded-For
+    - X-Real-Ip
+    - X-Forwarded-Server
 
 rollingUpdate:
   # -- Pods de más que puede crear durante un despliegue.

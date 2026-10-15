@@ -1,0 +1,43 @@
+{{- /*
+@file charts/whoami/templates/middlewares.yaml
+
+Middlewares de Traefik que se aplican a la ruta pública de la API, en el orden en que aparecen
+en `ingress.middlewares` del IngressRoute.
+
+- `ratelimit`: limita las peticiones por IP de origen; por encima del límite, Traefik responde
+  429 Too Many Requests sin llegar a la API.
+- `privacy`: borra de la petición las cabeceras que identifican al cliente (navegador, idioma,
+  sistema operativo) antes de reenviarla, y añade cabeceras de seguridad a la respuesta.
+  Una cabecera con valor vacío en `customRequestHeaders` se elimina.
+
+@see https://doc.traefik.io/traefik/middlewares/http/ratelimit/
+@see https://doc.traefik.io/traefik/middlewares/http/headers/
+*/ -}}
+{{- if .Values.ingress.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "whoami.fullname" . }}-ratelimit
+  labels:
+    {{- include "whoami.labels" . | nindent 4 }}
+spec:
+  rateLimit:
+    average: {{ .Values.ingress.rateLimit.average }}
+    burst: {{ .Values.ingress.rateLimit.burst }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "whoami.fullname" . }}-privacy
+  labels:
+    {{- include "whoami.labels" . | nindent 4 }}
+spec:
+  headers:
+    customRequestHeaders:
+      {{- range .Values.ingress.stripRequestHeaders }}
+      {{ . }}: ""
+      {{- end }}
+    frameDeny: true
+    contentTypeNosniff: true
+    referrerPolicy: no-referrer
+{{- end }}
