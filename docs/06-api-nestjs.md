@@ -106,6 +106,8 @@ argocd app get nest
 kubectl -n nest get pods,svc,ingressroute
 ```
 
+![Argo CD: la Application nest con el Job del seed, el Service y dos réplicas](capturas/04-argocd-nest.png)
+
 La Application `nest` sigue la misma política que la de whoami: sincronización automática, `prune` y
 `selfHeal`, con `releaseName: nest-hexagonal` para que los recursos se llamen `nest-hexagonal`.
 
@@ -122,6 +124,8 @@ curl -s -X POST https://nest.localhost/graphql -k \
 
 Responde `{"data":{"__typename":"Query"}}` por `http://` y por `https://`. La raíz `/` responde 404:
 la API no tiene ruta ahí.
+
+![GraphiQL: mutation Register con comentarios y su respuesta](capturas/01-graphiql-register.png)
 
 Desde el navegador, <https://nest.localhost/graphql> abre GraphiQL y <https://nest.localhost/docs>
 abre Swagger UI. Una petición `GET` a `/graphql` que no pida HTML la rechaza Apollo con un error de
@@ -150,6 +154,8 @@ kubectl -n nest logs job/nest-hexagonal-seed
 docker compose exec -T mongo mongosh --quiet nest-k8s --eval \
   'printjson({admins: db.users.countDocuments({role: "admin"}), clientes: db.users.countDocuments({role: "customer"}), pedidos: db.orders.countDocuments()})'
 ```
+
+![Compass: la colección orders de la base nest-k8s con los pedidos del seed](capturas/02-compass-nest-k8s.png)
 
 **Se cumple si** el log del Job dice `5 clientes nuevos de 5` la primera vez, y Mongo cuenta 1
 administrador, 5 clientes y 8 pedidos. En GraphiQL, la mutation `login` con las credenciales del

@@ -39,6 +39,8 @@ Cualquier nombre `*.localhost` resuelve a `127.0.0.1`, así que no hace falta to
 El panel no tiene autenticación y enseña toda la configuración de enrutado: sirve para local, no
 para producción.
 
+![Panel de Traefik: entrypoints, routers, servicios y middlewares, con el access log activado](capturas/08-traefik-dashboard.png)
+
 ## La ruta de la API
 
 El chart de `charts/whoami` genera un `IngressRoute` por entrypoint de `ingress.entryPoints`. Una
@@ -63,6 +65,8 @@ flowchart LR
 `X-Real-Ip` y `X-Forwarded-Server`. El `User-Agent: Go-http-client/1.1` que aparece después lo pone
 el propio proxy de Traefik al reenviar. En la respuesta añade `X-Frame-Options: DENY`,
 `X-Content-Type-Options: nosniff` y `Referrer-Policy: no-referrer`.
+
+![whoami a través de Traefik: sin User-Agent del navegador ni X-Forwarded-For](capturas/07-whoami-traefik.png)
 
 whoami sigue mostrando las IP del pod. La dirección `fe80::…` es de enlace local y se deriva de la
 MAC de la interfaz virtual del pod, que genera Kubernetes; no es la del equipo anfitrión.

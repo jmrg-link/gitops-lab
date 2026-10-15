@@ -38,6 +38,10 @@ La API arranca solo cuando las tres bases están sanas y `mssql-init` ha termina
 (`service_completed_successfully`). Por eso `docker compose ps -a` muestra `mssql-init` como
 `Exited (0)`: es lo esperado, no un fallo.
 
+![Docker Desktop: contenedores del proyecto gitops-lab con sus puertos](capturas/06-docker-compose.png)
+
+En Docker Desktop, SQL Server aparece con la marca `AMD64`: corre emulado con Rosetta.
+
 ## Decisiones que conviene conocer
 
 **Redis con `noeviction` y AOF.** Con cualquier otra política, Redis expulsa claves cuando se llena,

@@ -57,6 +57,13 @@ argocd app get whoami
 | `syncPolicy.automated.selfHeal` | `true` | Deshace los cambios hechos a mano en el clúster |
 | `finalizers` | `resources-finalizer…` | Borrar la Application borra también lo desplegado |
 
+![Argo CD: las Applications nest y whoami, Synced y Healthy](capturas/03-argocd-applications.png)
+
+En el árbol de `whoami` se ve el Job de migraciones `completed` (hook PreSync) junto al Service y las
+dos réplicas:
+
+![Argo CD: árbol de la Application whoami](capturas/05-argocd-whoami.png)
+
 La Application tiene dos estados independientes: **sincronización** (`Synced` u `OutOfSync`, Git
 frente al clúster) y **salud** (`Healthy`, `Progressing`, `Degraded`, `Missing`).
 
