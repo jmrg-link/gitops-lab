@@ -6,7 +6,7 @@ Laboratorio local del ciclo completo de un backend que se despliega con GitOps:<
 dependencias en Docker Compose, la API como chart de Helm y Argo CD manteniendo el clúster igual que Git.
 
 <img alt="Docker Compose" src="https://img.shields.io/static/v1?label=Docker&message=Compose&color=2496ED&logo=docker&logoColor=white" />
-<img alt="Kubernetes 1.36" src="https://img.shields.io/static/v1?label=Kubernetes&message=1.36&color=326CE5&logo=kubernetes&logoColor=white" />
+<img alt="Kubernetes 1.36" src="https://img.shields.io/static/v1?label=Kubernetes&message=1.36&color=326CE5&logo=kubernetes&logoColor=white&style=flat" />
 <img alt="Helm 4" src="https://img.shields.io/static/v1?label=Helm&message=4&color=0F1689&logo=helm&logoColor=white" />
 <img alt="Argo CD 3.5" src="https://img.shields.io/static/v1?label=Argo%20CD&message=3.5&color=EF7B4D&logo=argo&logoColor=white" />
 <img alt="Traefik 3.7" src="https://img.shields.io/static/v1?label=Traefik&message=3.7&color=24A1C1&logo=traefikproxy&logoColor=white" />
@@ -18,7 +18,7 @@ dependencias en Docker Compose, la API como chart de Helm y Argo CD manteniendo 
 
 **[🌐 Diagramas interactivos](https://jmrg-link.github.io/gitops-lab/)** · **[jmrg.dev](https://jmrg.dev)**
 
-[Qué es](#qué-es) · [Qué se comprueba](#qué-se-comprueba) · [Arranque rápido](#arranque-rápido) · [Diagramas](docs/diagrams/README.md) · [Documentación](#documentación) · [Autor](#autor)
+[Qué es](#qué-es) · [Qué se comprueba](#qué-se-comprueba) · [Arranque rápido](#arranque-rápido) · [Diagramas](docs/diagrams/README.md) · [Capturas](docs/capturas/README.md) · [Documentación](#documentación) · [Autor](#autor)
 
 </div>
 
@@ -120,6 +120,7 @@ argocd admin initial-password -n argocd
 
 Material visual:
 
+- [**Capturas**](docs/capturas/README.md): GraphiQL, Compass, Argo CD, Docker Desktop, whoami y el panel de Traefik con todo desplegado.
 - [**Diagramas interactivos**](https://jmrg-link.github.io/gitops-lab/) ([índice en el repo](docs/diagrams/README.md)): arquitectura, secuencia GitOps, arranque de Compose, ciclo de vida de la Application y rolling update.
 
 ## Estructura
@@ -150,6 +151,7 @@ gitops-lab/
 │   └── application-nest.yaml   Despliega charts/nest-hexagonal
 └── docs/
     ├── 01…06-*.md              Guías paso a paso
+    ├── capturas/               Capturas de cada interfaz con el laboratorio en marcha
     ├── diagrams/               Diagramas interactivos autocontenidos y sus miniaturas
     └── index.html              Portada de GitHub Pages
 ```
