@@ -25,6 +25,36 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- /*
+Variables de entorno de la API: las de `env`, `JWT_SECRET` de `existingSecret` y el
+administrador de `adminSecret`. La comparten el Deployment y el Job del seed.
+*/ -}}
+{{- define "nest.env" -}}
+- name: PORT
+  value: {{ .Values.containerPort | quote }}
+{{- range $name, $value := .Values.env }}
+- name: {{ $name }}
+  value: {{ $value | quote }}
+{{- end }}
+- name: JWT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.existingSecret }}
+      key: JWT_SECRET
+{{- if .Values.adminSecret }}
+- name: ADMIN_EMAIL
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.adminSecret }}
+      key: ADMIN_EMAIL
+- name: ADMIN_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.adminSecret }}
+      key: ADMIN_PASSWORD
+{{- end }}
+{{- end -}}
+
+{{- /*
 Labels comunes de todos los recursos.
 */ -}}
 {{- define "nest.labels" -}}

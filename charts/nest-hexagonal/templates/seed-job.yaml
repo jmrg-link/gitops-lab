@@ -1,0 +1,46 @@
+{{- /*
+@file charts/nest-hexagonal/templates/seed-job.yaml
+
+Job que carga los datos de ejemplo de la API (`node dist/seed.js`) después de cada sincronización.
+
+- Argo CD lo lanza como hook `PostSync`, cuando el Deployment ya está sano y el administrador
+  existe; `BeforeHookCreation` borra el Job anterior al crear el siguiente.
+- El seed crea 5 clientes y 8 pedidos y se salta los clientes cuyo email ya existe, así que se
+  puede repetir en cada sincronización.
+- Necesita `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `SEED_PASSWORD` del Secret `adminSecret`, que se
+  crea fuera de Git. Si falta, el Job falla y la Application queda marcada como fallida.
+
+@see https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/
+*/ -}}
+{{- if .Values.seed.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "nest.fullname" . }}-seed
+  labels:
+    {{- include "nest.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "dist/seed.js"]
+          env:
+            {{- include "nest.env" . | nindent 12 }}
+            - name: SEED_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.adminSecret }}
+                  key: SEED_PASSWORD
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+{{- end }}

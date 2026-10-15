@@ -36,6 +36,14 @@ env:
 # -- Secret con `JWT_SECRET` (mínimo 32 caracteres), creado fuera de Git.
 existingSecret: nest-hexagonal-secrets
 
+# -- Secret con `ADMIN_EMAIL`, `ADMIN_PASSWORD` (mínimo 12 caracteres) y `SEED_PASSWORD` (mínimo 8),
+# creado fuera de Git. La API crea el administrador al arrancar; vacío, no hay administrador.
+adminSecret: nest-hexagonal-admin
+
+seed:
+  # -- Lanza el seed de datos de ejemplo como hook PostSync de Argo CD. Requiere `adminSecret`.
+  enabled: true
+
 service:
   # -- Puerto del Service dentro del clúster.
   port: 80
