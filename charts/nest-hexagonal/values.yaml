@@ -27,7 +27,8 @@ env:
   NODE_ENV: production
   DB_DRIVER: mongoose
   # -- MongoDB del Compose del laboratorio, alcanzable desde el clúster por el nombre del anfitrión.
-  MONGO_URI: mongodb://host.docker.internal:27017/orders?directConnection=true
+  # Base propia `nest-k8s`, para no mezclar datos con la API que corra fuera del clúster.
+  MONGO_URI: mongodb://host.docker.internal:27017/nest-k8s?directConnection=true
   CORS_ORIGINS: https://nest.localhost
 
 # -- Secret con `JWT_SECRET` (mínimo 32 caracteres), creado fuera de Git.
