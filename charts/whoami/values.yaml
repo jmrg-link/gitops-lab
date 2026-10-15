@@ -28,6 +28,14 @@ service:
   # -- Puerto del Service dentro del clúster.
   port: 80
 
+ingress:
+  # -- Publica la API con un IngressRoute de Traefik. Requiere los CRD de Traefik en el clúster.
+  enabled: true
+  # -- Nombre por el que se llega a la API; `*.localhost` resuelve a 127.0.0.1.
+  host: whoami.localhost
+  # -- Entrypoints de Traefik que atienden la ruta.
+  entryPoints: ["web"]
+
 rollingUpdate:
   # -- Pods de más que puede crear durante un despliegue.
   maxSurge: 1

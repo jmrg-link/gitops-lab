@@ -1,0 +1,24 @@
+# @file traefik/values-local.yaml
+#
+# Valores para instalar Traefik con su chart oficial (traefik/traefik) como ingress controller
+# del Kubernetes de Docker Desktop, con el panel de gestión visible en local.
+#
+# - El Service del chart es de tipo LoadBalancer: Docker Desktop lo publica en localhost:80 y
+#   localhost:443, así que cualquier nombre `*.localhost` llega a Traefik sin port-forward.
+# - El panel se sirve por el entrypoint `web` con la regla `Host(traefik.localhost)`, en
+#   http://traefik.localhost/dashboard/ (la barra final es obligatoria).
+# - Sin autenticación: el panel enseña toda la configuración de enrutado. No sirve para
+#   producción; allí va detrás de un middleware de autenticación y con TLS.
+#
+# @example
+#   helm install traefik traefik/traefik --version 41.7.1 -n traefik --create-namespace -f traefik/values-local.yaml --wait
+# @see https://github.com/traefik/traefik-helm-chart/blob/master/EXAMPLES.md
+
+ingressRoute:
+  dashboard:
+    # -- Crea el IngressRoute del panel, que apunta al servicio interno `api@internal`.
+    enabled: true
+    # -- Nombre por el que se llega al panel desde el navegador.
+    matchRule: Host(`traefik.localhost`)
+    # -- Entrypoint HTTP publicado en el puerto 80 de localhost.
+    entryPoints: ["web"]

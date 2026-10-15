@@ -1,0 +1,29 @@
+{{- /*
+@file charts/whoami/templates/ingressroute.yaml
+
+IngressRoute de Traefik que publica la API fuera del clúster por un nombre de host.
+
+- Necesita los CRD de Traefik instalados en el clúster (chart traefik/traefik).
+- Enruta el entrypoint `web` al Service de la API; Traefik solo envía tráfico a los pods que
+  pasan la readiness, igual que el Service.
+- Con `ingress.enabled: false` no se genera nada y la API solo es accesible dentro del clúster.
+
+@see https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/
+*/ -}}
+{{- if .Values.ingress.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "whoami.fullname" . }}
+  labels:
+    {{- include "whoami.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    {{- toYaml .Values.ingress.entryPoints | nindent 4 }}
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`)
+      kind: Rule
+      services:
+        - name: {{ include "whoami.fullname" . }}
+          port: {{ .Values.service.port }}
+{{- end }}
