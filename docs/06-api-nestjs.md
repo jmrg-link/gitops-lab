@@ -58,7 +58,7 @@ secretas.
 
 | Variable | Valor | Por qué |
 |---|---|---|
-| `NODE_ENV` | `production` | Desactiva Swagger UI en `/docs` |
+| `NODE_ENV` | `development` | Deja activos GraphiQL en `/graphql`, Swagger UI en `/docs` y la introspección para explorar la API; con `production` se desactivan |
 | `DB_DRIVER` | `mongoose` | Persistencia en MongoDB |
 | `MONGO_URI` | `mongodb://host.docker.internal:27017/nest-k8s?directConnection=true` | El Mongo del Compose, visto desde el clúster |
 | `CORS_ORIGINS` | `https://nest.localhost` | Origen permitido para el navegador |
@@ -95,6 +95,11 @@ curl -s -X POST https://nest.localhost/graphql -k \
 
 Responde `{"data":{"__typename":"Query"}}` por `http://` y por `https://`. La raíz `/` responde 404:
 la API no tiene ruta ahí.
+
+Desde el navegador, <https://nest.localhost/graphql> abre GraphiQL y <https://nest.localhost/docs>
+abre Swagger UI. Una petición `GET` a `/graphql` que no pida HTML la rechaza Apollo con un error de
+CSRF: solo acepta las que llevan `content-type: application/json` o la cabecera
+`apollo-require-preflight`.
 
 El ciclo completo de autenticación, por HTTPS:
 

@@ -104,7 +104,7 @@ argocd admin initial-password -n argocd
 | SQL Server | `localhost:1433`, usuario `sa` |
 | Panel de Traefik | <http://traefik.localhost/dashboard/> (con la barra final) |
 | API desplegada por Argo CD | <http://whoami.localhost/> y <https://whoami.localhost/> (certificado autofirmado) |
-| API NestJS | `POST` a <https://nest.localhost/graphql> y rutas `/auth/...`; la raíz responde 404 |
+| API NestJS | GraphiQL en <https://nest.localhost/graphql>, Swagger en <https://nest.localhost/docs> y rutas `/auth/...` |
 | Argo CD | <http://localhost:8080> con el port-forward |
 
 ## Documentación
