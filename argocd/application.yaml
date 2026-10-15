@@ -1,0 +1,40 @@
+# @file argocd/application.yaml
+#
+# Application de Argo CD que despliega `charts/whoami` desde tu repositorio de GitHub en el
+# namespace `lab` y mantiene el clúster igual que Git.
+#
+# - `releaseName: lab` da a los recursos los mismos nombres que `helm install lab`.
+# - `automated` sincroniza al detectar cambios en Git; `prune` borra lo que desaparece de Git
+#   y `selfHeal` deshace los cambios hechos a mano en el clúster.
+# - El finalizer borra lo desplegado cuando se borra la Application.
+#
+# @param repoURL - Tu repositorio jmrg-link/gitops-lab. Si lo creas con otro nombre o es
+#   privado, cambia la URL o regístralo antes con `argocd repo add`.
+# @example
+#   kubectl apply -f argocd/application.yaml
+#   argocd app get whoami
+# @see https://argo-cd.readthedocs.io/en/stable/user-guide/helm/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: whoami
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jmrg-link/gitops-lab.git
+    targetRevision: main
+    path: charts/whoami
+    helm:
+      releaseName: lab
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,106 @@
+# @file compose.yml
+#
+# Dependencias locales de un backend de prueba: Redis para colas con BullMQ, MongoDB y
+# SQL Server. Tu API puede correr en el Mac (`npm run start:dev`) contra localhost.
+#
+# - Cada base tiene healthcheck, y `up --wait` vuelve cuando todas están sanas.
+# - Redis va con `noeviction` y AOF: si Redis expulsa claves, BullMQ pierde jobs.
+# - MongoDB arranca como replica set de un nodo; sin replica set no hay transacciones.
+#   Conecta con `mongodb://localhost:27017/lab?directConnection=true`.
+# - MongoDB va con `--quiet`, que omite las conexiones abiertas y cerradas, y su healthcheck
+#   comprueba cada 2 s mientras arranca y cada 30 s después, para no llenar el log. Su caché
+#   se limita a 512 MB.
+# - SQL Server solo publica imagen x86-64: en Apple Silicon corre emulado con Rosetta.
+#   Microsoft no soporta la emulación; sirve para desarrollo. Su memoria se limita a 2 GB,
+#   el mínimo que exige, para dejar sitio a Kubernetes y Argo CD.
+# - `mssql-init` crea la base `lab` cuando SQL Server está sano y termina.
+# - `api` es un sustituto (traefik/whoami): en tu proyecto sería `build: .` con tu Dockerfile.
+#   Arranca solo cuando las bases están sanas y `mssql-init` ha terminado bien.
+#
+# @param MSSQL_SA_PASSWORD - Contraseña de `sa`, en `.env`: 8 caracteres o más, con tres de
+#   estos cuatro tipos: mayúsculas, minúsculas, dígitos y símbolos.
+# @example
+#   docker compose up -d --wait
+#   docker compose ps -a
+#   curl localhost:8081
+#   docker compose down -v
+# @see https://docs.docker.com/reference/compose-file/
+name: gitops-lab
+
+services:
+  redis:
+    image: redis:8.10
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:8.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--quiet", "--wiredTigerCacheSizeGB", "0.5"]
+    ports: ["27017:27017"]
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - >-
+          try { rs.status() } catch { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) }
+          if (!db.hello().isWritablePrimary) quit(1)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-CU27-GDR1-ubuntu-22.04
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_MEMORY_LIMIT_MB: "2048"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}
+    ports: ["1433:1433"]
+    volumes: [mssql-data:/var/opt/mssql]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -b -Q 'SELECT 1' -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-CU27-GDR1-ubuntu-22.04
+    platform: linux/amd64
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "IF DB_ID('lab') IS NULL CREATE DATABASE lab"
+
+  api:
+    image: traefik/whoami:v1.12.0
+    command: ["--port", "8080", "--name", "compose"]
+    ports: ["8081:8080"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
+
+volumes:
+  redis-data:
+  mongo-data:
+  mssql-data:

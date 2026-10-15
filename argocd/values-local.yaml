@@ -1,0 +1,26 @@
+# @file argocd/values-local.yaml
+#
+# Valores para instalar Argo CD con su chart oficial (argo/argo-cd) en el Kubernetes de
+# Docker Desktop, con lo mínimo para un laboratorio.
+#
+# - `server.insecure` sirve la UI y la API por HTTP, así que el port-forward no necesita
+#   certificado.
+# - Sin Dex (SSO) ni controlador de notificaciones: menos pods y menos memoria.
+# - No sirve para producción: allí van TLS, SSO y alta disponibilidad (`redis-ha`).
+#
+# @example
+#   helm install argocd argo/argo-cd --version 10.10.0 -n argocd --create-namespace -f argocd/values-local.yaml --wait
+# @see https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+
+configs:
+  params:
+    # -- Sirve la UI y la API sin TLS.
+    server.insecure: true
+
+dex:
+  # -- Sin SSO: el laboratorio entra con el usuario admin.
+  enabled: false
+
+notifications:
+  # -- Sin controlador de notificaciones.
+  enabled: false

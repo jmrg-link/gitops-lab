@@ -1,0 +1,50 @@
+# @file charts/whoami/values.yaml
+#
+# Valores por defecto del chart, que son su API pública. Cada clave lleva su descripción en
+# un comentario `# --` justo encima; helm-docs genera con ellos la tabla del README.
+#
+# @example
+#   helm install lab charts/whoami -n lab --set image.tag=v1.12.0
+# @see https://github.com/norwoodj/helm-docs
+
+# -- Réplicas del Deployment. Con 2 o más, un rolling update no deja la API sin servicio.
+replicaCount: 2
+
+image:
+  # -- Imagen del contenedor.
+  repository: traefik/whoami
+  # -- Tag de la imagen; vacío usa `appVersion` de Chart.yaml. En GitOps, el CI cambia este valor.
+  tag: ""
+  # -- Cuándo descargar la imagen.
+  pullPolicy: IfNotPresent
+
+# -- Nombre que devuelve la API en la línea `Name:`, para ver qué configuración responde.
+appName: lab
+
+# -- Puerto en el que escucha el contenedor; mayor que 1024 para correr sin root.
+containerPort: 8080
+
+service:
+  # -- Puerto del Service dentro del clúster.
+  port: 80
+
+rollingUpdate:
+  # -- Pods de más que puede crear durante un despliegue.
+  maxSurge: 1
+  # -- Pods que pueden faltar durante un despliegue; con 0 nunca baja de `replicaCount`.
+  maxUnavailable: 0
+
+# -- Recursos del contenedor: el request reserva capacidad en el nodo y el límite de memoria
+# evita que un pod con fugas afecte a los demás.
+resources:
+  requests:
+    cpu: 10m
+    memory: 16Mi
+  limits:
+    memory: 64Mi
+
+migrations:
+  # -- Crea el Job de migraciones que corre antes de instalar o actualizar.
+  enabled: true
+  # -- Imagen del Job. En un proyecto real, la de la API con `prisma migrate deploy`.
+  image: busybox:1.38

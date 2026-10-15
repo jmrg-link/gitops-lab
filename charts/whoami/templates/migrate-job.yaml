@@ -1,0 +1,35 @@
+{{- /*
+@file charts/whoami/templates/migrate-job.yaml
+
+Job de migraciones que corre antes de instalar o actualizar la aplicación.
+
+- Helm lo lanza como hook `pre-install,pre-upgrade`; Argo CD traduce esas anotaciones a PreSync.
+- `before-hook-creation` borra el Job anterior al crear el siguiente, así que el último queda
+  para leer sus logs.
+- Puede ejecutarse más de una vez (reintentos, dos despliegues seguidos): la migración tiene
+  que ser idempotente.
+- `helm uninstall` no borra los recursos de los hooks.
+
+@see https://helm.sh/docs/topics/charts_hooks/
+@see https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-hooks
+*/ -}}
+{{- if .Values.migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "whoami.fullname" . }}-migrate
+  labels:
+    {{- include "whoami.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: {{ .Values.migrations.image }}
+          command: ["sh", "-c", "echo 'Migrando para {{ .Values.image.tag | default .Chart.AppVersion }}' && sleep 5"]
+{{- end }}

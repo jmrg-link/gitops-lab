@@ -1,0 +1,18 @@
+# @file charts/whoami/Chart.yaml
+#
+# Metadatos del chart de laboratorio: traefik/whoami hace de API y responde con el nombre del
+# pod que atiende, así que se ve qué versión y qué réplica contesta.
+#
+# - `version` es la del chart: súbela con cada cambio en plantillas o valores.
+# - `appVersion` es la de la aplicación; las plantillas la usan si `image.tag` está vacío.
+#
+# @example
+#   helm lint charts/whoami
+#   helm template lab charts/whoami --namespace lab
+# @see https://helm.sh/docs/topics/charts/#the-chartyaml-file
+apiVersion: v2
+name: whoami
+description: API de laboratorio para practicar Helm y Argo CD
+type: application
+version: 0.1.0
+appVersion: "v1.11.0"
