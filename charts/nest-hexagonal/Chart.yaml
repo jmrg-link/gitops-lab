@@ -1,0 +1,18 @@
+# @file charts/nest-hexagonal/Chart.yaml
+#
+# Chart de la API NestJS de jmrg-link/nest-hexagonal-adapters: usuarios y pedidos por REST y
+# GraphQL, con MongoDB como persistencia en este laboratorio.
+#
+# - `version` es la del chart: súbela con cada cambio en plantillas o valores.
+# - `appVersion` es el tag de la imagen local que construye `apps/nest-hexagonal/Dockerfile`.
+#
+# @example
+#   helm lint charts/nest-hexagonal
+#   helm template nest-hexagonal charts/nest-hexagonal --namespace nest
+# @see https://github.com/jmrg-link/nest-hexagonal-adapters
+apiVersion: v2
+name: nest-hexagonal
+description: API NestJS de usuarios y pedidos desplegada en el laboratorio
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

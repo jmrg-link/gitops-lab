@@ -1,0 +1,37 @@
+# @file argocd/application-nest.yaml
+#
+# Application de Argo CD que despliega `charts/nest-hexagonal` desde este repositorio en el
+# namespace `nest`.
+#
+# - Antes de aplicarla: construir la imagen local y crear el Secret con `JWT_SECRET`, que no se
+#   versiona (ver la cabecera de `charts/nest-hexagonal/values.yaml`).
+# - Misma política que la Application de whoami: sincronización automática, `prune` y `selfHeal`.
+#
+# @example
+#   kubectl apply -f argocd/application-nest.yaml
+#   argocd app get nest
+# @see https://argo-cd.readthedocs.io/en/stable/user-guide/helm/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nest
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/jmrg-link/gitops-lab.git
+    targetRevision: main
+    path: charts/nest-hexagonal
+    helm:
+      releaseName: nest-hexagonal
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nest
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

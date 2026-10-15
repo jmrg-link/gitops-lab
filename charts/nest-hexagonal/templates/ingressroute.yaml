@@ -1,0 +1,29 @@
+{{- /*
+@file charts/nest-hexagonal/templates/ingressroute.yaml
+
+IngressRoutes de Traefik que publican la API por `ingress.host`, uno por entrypoint. El de
+`websecure` termina TLS con el certificado autofirmado por defecto de Traefik.
+*/ -}}
+{{- if .Values.ingress.enabled }}
+{{- range $entryPoint := .Values.ingress.entryPoints }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "nest.fullname" $ }}-{{ $entryPoint }}
+  labels:
+    {{- include "nest.labels" $ | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ $entryPoint }}
+  routes:
+    - match: Host(`{{ $.Values.ingress.host }}`)
+      kind: Rule
+      services:
+        - name: {{ include "nest.fullname" $ }}
+          port: {{ $.Values.service.port }}
+  {{- if eq $entryPoint "websecure" }}
+  tls: {}
+  {{- end }}
+{{- end }}
+{{- end }}

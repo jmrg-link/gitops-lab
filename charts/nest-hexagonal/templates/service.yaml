@@ -1,0 +1,19 @@
+{{- /*
+@file charts/nest-hexagonal/templates/service.yaml
+
+Service ClusterIP delante de los pods de la API.
+*/ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nest.fullname" . }}
+  labels:
+    {{- include "nest.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "nest.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http

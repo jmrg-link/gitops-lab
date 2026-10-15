@@ -1,0 +1,60 @@
+# @file charts/nest-hexagonal/values.yaml
+#
+# Valores por defecto del chart. Los secretos no van aquí: el Deployment lee `JWT_SECRET` del
+# Secret `existingSecret`, que se crea a mano en el clúster.
+#
+# @example
+#   kubectl create namespace nest
+#   kubectl -n nest create secret generic nest-hexagonal-secrets --from-literal=JWT_SECRET="$(openssl rand -hex 32)"
+# @see https://github.com/jmrg-link/nest-hexagonal-adapters/blob/main/src/config/app-config.ts
+
+# -- Réplicas del Deployment.
+replicaCount: 2
+
+image:
+  # -- Imagen construida en local con `apps/nest-hexagonal/Dockerfile`.
+  repository: nest-hexagonal-adapters
+  # -- Tag de la imagen; vacío usa `appVersion` de Chart.yaml.
+  tag: ""
+  # -- `Never`: la imagen solo existe en el motor Docker local, no en un registro.
+  pullPolicy: Never
+
+# -- Puerto en el que escucha la API.
+containerPort: 3000
+
+# -- Variables de entorno que valida la API al arrancar; ninguna es secreta.
+env:
+  NODE_ENV: production
+  DB_DRIVER: mongoose
+  # -- MongoDB del Compose del laboratorio, alcanzable desde el clúster por el nombre del anfitrión.
+  MONGO_URI: mongodb://host.docker.internal:27017/orders?directConnection=true
+  CORS_ORIGINS: https://nest.localhost
+
+# -- Secret con `JWT_SECRET` (mínimo 32 caracteres), creado fuera de Git.
+existingSecret: nest-hexagonal-secrets
+
+service:
+  # -- Puerto del Service dentro del clúster.
+  port: 80
+
+ingress:
+  # -- Publica la API con IngressRoutes de Traefik.
+  enabled: true
+  # -- Nombre por el que se llega a la API.
+  host: nest.localhost
+  # -- Entrypoints de Traefik: `web` (80) y `websecure` (443, TLS autofirmado).
+  entryPoints: ["web", "websecure"]
+
+rollingUpdate:
+  # -- Pods de más que puede crear durante un despliegue.
+  maxSurge: 1
+  # -- Pods que pueden faltar durante un despliegue.
+  maxUnavailable: 0
+
+# -- Recursos del contenedor.
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 384Mi
