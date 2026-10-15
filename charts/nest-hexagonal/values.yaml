@@ -24,7 +24,9 @@ containerPort: 3000
 
 # -- Variables de entorno que valida la API al arrancar; ninguna es secreta.
 env:
-  NODE_ENV: production
+  # -- `development` deja activos GraphiQL en /graphql, Swagger UI en /docs y la introspección,
+  # para explorar la API en el laboratorio; `production` los desactiva.
+  NODE_ENV: development
   DB_DRIVER: mongoose
   # -- MongoDB del Compose del laboratorio, alcanzable desde el clúster por el nombre del anfitrión.
   # Base propia `nest-k8s`, para no mezclar datos con la API que corra fuera del clúster.
