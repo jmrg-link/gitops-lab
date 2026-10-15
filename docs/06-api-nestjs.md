@@ -71,7 +71,34 @@ anuncia como `localhost:27017`, que dentro del pod no es el Mongo.
 La base es `nest-k8s` y no la `orders` que trae la API por defecto, para que los datos del clúster no
 se mezclen con los de una API arrancada fuera de él contra el mismo Mongo.
 
-## 3. Desplegar
+## 3. Administrador y datos de ejemplo
+
+La API crea un administrador al arrancar si recibe `ADMIN_EMAIL` y `ADMIN_PASSWORD`, y su seed carga
+5 clientes y 8 pedidos, dos en cada estado. Las tres variables son secretas, así que van en un Secret
+aparte creado a mano:
+
+```bash
+kubectl -n nest create secret generic nest-hexagonal-admin \
+  --from-literal=ADMIN_EMAIL='<email-del-admin>' \
+  --from-literal=ADMIN_PASSWORD='<contraseña-del-admin>' \
+  --from-literal=SEED_PASSWORD='<contraseña-de-los-clientes>'
+```
+
+| Clave | Regla | Para qué |
+|---|---|---|
+| `ADMIN_EMAIL` | email válido | Usuario administrador que crea la API al arrancar |
+| `ADMIN_PASSWORD` | mínimo 12 caracteres | Su contraseña |
+| `SEED_PASSWORD` | mínimo 8 caracteres | Contraseña común de los clientes de ejemplo |
+
+Si ya tienes esos valores en un fichero de variables local, se pueden cargar sin escribirlos en la
+terminal con `--from-env-file=<(grep -E '^(ADMIN_EMAIL|ADMIN_PASSWORD|SEED_PASSWORD)=' <fichero>)`.
+
+El seed corre como un Job con el hook `PostSync` de Argo CD (`templates/seed-job.yaml`): después de
+cada sincronización, cuando el Deployment ya está sano y el administrador existe. Se salta los
+clientes cuyo email ya existe, así que repetirlo no duplica datos. Con `seed.enabled: false` no se
+lanza.
+
+## 4. Desplegar
 
 ```bash
 kubectl apply -f argocd/application-nest.yaml
@@ -86,7 +113,7 @@ La API no tiene ruta de salud, así que las tres probes comprueban que el puerto
 conexiones. La API cierra sus conexiones al recibir SIGTERM (`enableShutdownHooks`), y el `preStop`
 de 5 segundos da tiempo a que Traefik deje de enviarle tráfico antes.
 
-## 4. Probarla
+## 5. Probarla
 
 ```bash
 curl -s -X POST https://nest.localhost/graphql -k \
@@ -115,6 +142,19 @@ docker compose exec -T mongo mongosh --quiet nest-k8s --eval "db.users.countDocu
 
 **Se cumple si** el registro responde `201`, el login devuelve un token, `/auth/me` devuelve el
 email con el rol `customer` y Mongo cuenta un documento.
+
+Para comprobar el seed y el administrador sin usar ninguna contraseña:
+
+```bash
+kubectl -n nest logs job/nest-hexagonal-seed
+docker compose exec -T mongo mongosh --quiet nest-k8s --eval \
+  'printjson({admins: db.users.countDocuments({role: "admin"}), clientes: db.users.countDocuments({role: "customer"}), pedidos: db.orders.countDocuments()})'
+```
+
+**Se cumple si** el log del Job dice `5 clientes nuevos de 5` la primera vez, y Mongo cuenta 1
+administrador, 5 clientes y 8 pedidos. En GraphiQL, la mutation `login` con las credenciales del
+administrador devuelve un `accessToken`; con él en la pestaña *Headers*
+(`{"Authorization": "Bearer <token>"}`) funcionan las consultas de administrador.
 
 ## Actualizar la API
 

@@ -117,7 +117,7 @@ una línea en `kubectl -n traefik logs deploy/traefik`.
 ## 7. Una API con estado se despliega igual
 
 El mismo flujo de Git, Argo CD y Traefik con la API NestJS, que guarda usuarios en MongoDB. Los
-comandos están en la [guía 6](06-api-nestjs.md#4-probarla).
+comandos están en la [guía 6](06-api-nestjs.md#5-probarla).
 
 **Se cumple si** la Application `nest` está `Synced` y `Healthy`, `POST /graphql` responde por
 `http://` y `https://nest.localhost`, el registro devuelve `201`, el login un `accessToken`,
