@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GitOps Lab · Diagramas</title>
+  <meta name="description" content="Diagramas interactivos de un laboratorio GitOps local: Docker Compose, un chart de Helm y Argo CD sobre Kubernetes." />
+  <style>
+    :root { color-scheme: light dark; --bg: #f6f8fa; --card: #fff; --text: #1f2328; --muted: #59636e; --line: #d1d9e0; --accent: #ef7b4d; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --card: #151b23; --text: #e6edf3; --muted: #9198a1; --line: #30363d; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+    header, main, footer { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    header { padding-top: 56px; padding-bottom: 8px; }
+    h1 { margin: 0 0 8px; font-size: 2.2rem; }
+    header p { margin: 0; color: var(--muted); max-width: 720px; }
+    nav { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin: 32px 0; }
+    .card { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; color: inherit; transition: transform .15s, box-shadow .15s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(0 0 0 / .12); text-decoration: none; }
+    .card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); background: #fff; }
+    .card div { padding: 14px 16px 18px; }
+    .card h2 { margin: 0 0 4px; font-size: 1.05rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .92rem; }
+    .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 6px; }
+    footer { padding-bottom: 48px; color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GitOps Lab</h1>
+    <p>Laboratorio local del ciclo completo de un backend que se despliega con GitOps: dependencias en Docker Compose, la API como chart de Helm y Argo CD manteniendo el clúster igual que el repositorio. Estos diagramas explican cómo está montado y qué pasa en cada despliegue.</p>
+    <nav>
+      <a href="https://github.com/jmrg-link/gitops-lab">Código en GitHub</a>
+      <a href="https://github.com/jmrg-link/gitops-lab/blob/main/docs/04-que-se-comprueba.md">Qué se comprueba</a>
+      <a href="https://jmrg.dev">jmrg.dev</a>
+    </nav>
+  </header>
+  <main class="grid">
+    <a class="card" href="diagrams/01-arquitectura-laboratorio.html">
+      <img src="diagrams/previews/01-arquitectura-laboratorio.png" alt="Arquitectura del laboratorio" loading="lazy" />
+      <div><h2><span class="num">01</span>Arquitectura del laboratorio</h2><p>Compose, el clúster con los namespaces argocd y lab, y el repositorio del que Argo CD lee el chart.</p></div>
+    </a>
+    <a class="card" href="diagrams/02-secuencia-despliegue-gitops.html">
+      <img src="diagrams/previews/02-secuencia-despliegue-gitops.png" alt="Secuencia GitOps" loading="lazy" />
+      <div><h2><span class="num">02</span>De un commit a los pods nuevos</h2><p>Sondeo, renderizado con Helm, migraciones en PreSync y rolling update en Sync.</p></div>
+    </a>
+    <a class="card" href="diagrams/03-arranque-compose.html">
+      <img src="diagrams/previews/03-arranque-compose.png" alt="Arranque de Compose" loading="lazy" />
+      <div><h2><span class="num">03</span>Arranque de Compose</h2><p>Healthchecks en paralelo, la tarea de inicialización y la API esperando a que todo esté listo.</p></div>
+    </a>
+    <a class="card" href="diagrams/04-ciclo-de-vida-application.html">
+      <img src="diagrams/previews/04-ciclo-de-vida-application.png" alt="Ciclo de vida de la Application" loading="lazy" />
+      <div><h2><span class="num">04</span>Ciclo de vida de la Application</h2><p>Sincronización, deriva y selfHeal, fallos de migración o readiness y borrado con finalizer.</p></div>
+    </a>
+    <a class="card" href="diagrams/05-rolling-update.html">
+      <img src="diagrams/previews/05-rolling-update.png" alt="Rolling update" loading="lazy" />
+      <div><h2><span class="num">05</span>Rolling update sin pérdida de servicio</h2><p>maxSurge 1 y maxUnavailable 0: readiness antes del relevo y preStop antes de SIGTERM.</p></div>
+    </a>
+  </main>
+  <footer>Jesús María Rico González · <a href="https://github.com/jmrg-link">GitHub</a> · Licencia MIT</footer>
+</body>
+</html>

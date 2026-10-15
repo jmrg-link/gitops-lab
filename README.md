@@ -15,7 +15,9 @@ dependencias en Docker Compose, la API como chart de Helm y Argo CD manteniendo 
 <img alt="SQL Server 2022" src="https://img.shields.io/static/v1?label=SQL%20Server&message=2022&color=CC2927" />
 <img alt="Licencia MIT" src="https://img.shields.io/static/v1?label=licencia&message=MIT&color=blue" />
 
-[Qué es](#qué-es) · [Arranque rápido](#arranque-rápido) · [Documentación](#documentación) · [Estructura](#estructura) · [Autor](#autor)
+**[🌐 Diagramas interactivos](https://jmrg-link.github.io/gitops-lab/)** · **[jmrg.dev](https://jmrg.dev)**
+
+[Qué es](#qué-es) · [Qué se comprueba](#qué-se-comprueba) · [Arranque rápido](#arranque-rápido) · [Diagramas](docs/diagrams/README.md) · [Documentación](#documentación) · [Autor](#autor)
 
 </div>
 
@@ -28,22 +30,26 @@ hay en el repositorio. Este laboratorio monta las tres cosas en un Mac con Docke
 La API es [traefik/whoami](https://github.com/traefik/whoami), que responde con el nombre del pod
 que atiende la petición: se ve en cada momento qué versión y qué réplica contesta.
 
-```mermaid
-flowchart LR
-  subgraph Compose
-    redis[Redis] & mongo[MongoDB] & mssql[SQL Server] --> api[API :8081]
-  end
-  subgraph Kubernetes
-    argo[Argo CD] -->|sincroniza| app[whoami en namespace lab]
-  end
-  repo[(este repositorio)] --> argo
-```
+[![Arquitectura del laboratorio](docs/diagrams/previews/01-arquitectura-laboratorio.png)](docs/diagrams/README.md)
 
-| Pieza | Qué demuestra |
-|---|---|
-| `compose.yml` | Dependencias con healthchecks y orden de arranque: la API no arranca hasta que las bases están sanas |
-| `charts/whoami` | Rolling update sin pérdida de servicio y migraciones como hook antes de cada despliegue |
-| `argocd/` | GitOps: un commit despliega, un `git revert` vuelve atrás y los cambios manuales se deshacen solos |
+| Pieza | Dónde corre | Para qué |
+|---|---|---|
+| `compose.yml` | Docker Compose | Redis, MongoDB y SQL Server para desarrollar contra localhost, con la API detrás |
+| `charts/whoami` | Kubernetes, namespace `lab` | La API empaquetada: Job de migraciones, Deployment con rolling update y Service |
+| `argocd/` | Kubernetes, namespace `argocd` | Argo CD instalado con su chart y la Application que despliega el chart desde este repositorio |
+
+## Qué se comprueba
+
+Cada pieza existe para comprobar un comportamiento concreto. La [guía 4](docs/04-que-se-comprueba.md)
+tiene el comando que lo provoca y el resultado que dice si se cumple.
+
+| # | Comportamiento | Cómo se ve |
+|---|---|---|
+| 1 | Las dependencias arrancan en orden | `docker compose ps -a`: bases `healthy`, `mssql-init` en `Exited (0)` y la API arriba |
+| 2 | Las migraciones corren antes de la versión nueva | El Job termina antes de que arranquen los pods y su log nombra la versión |
+| 3 | Desplegar no reduce la capacidad | Los eventos del Deployment: nunca menos de dos pods listos |
+| 4 | Solo un commit cambia lo desplegado | Un `kubectl scale` a mano se deshace solo en segundos |
+| 5 | Volver atrás es revertir un commit | `git revert` restaura la versión; `argocd app rollback` se niega |
 
 ## Arranque rápido
 
@@ -94,6 +100,11 @@ argocd admin initial-password -n argocd
 | 1 | [Docker Compose](docs/01-docker-compose.md) | Servicios, orden de arranque y por qué cada base está configurada así |
 | 2 | [El chart de Helm](docs/02-chart-helm.md) | Valores, rolling update, migraciones como hook y qué hace (y qué no) un rollback |
 | 3 | [GitOps con Argo CD](docs/03-argocd-gitops.md) | Instalación, la Application, cinco experimentos y la limpieza |
+| 4 | [Qué se comprueba](docs/04-que-se-comprueba.md) | Los cinco comportamientos, cómo provocarlos y cómo saber si se cumplen |
+
+Material visual:
+
+- [**Diagramas interactivos**](https://jmrg-link.github.io/gitops-lab/) ([índice en el repo](docs/diagrams/README.md)): arquitectura, secuencia GitOps, arranque de Compose, ciclo de vida de la Application y rolling update.
 
 ## Estructura
 
@@ -112,7 +123,10 @@ gitops-lab/
 ├── argocd/
 │   ├── values-local.yaml       Argo CD mínimo para local
 │   └── application.yaml        Despliega charts/whoami desde este repositorio
-└── docs/                       Guías paso a paso
+└── docs/
+    ├── 01…04-*.md              Guías paso a paso
+    ├── diagrams/               Diagramas interactivos autocontenidos y sus miniaturas
+    └── index.html              Portada de GitHub Pages
 ```
 
 Cada fichero empieza con una cabecera que explica qué hace y por qué; en `values.yaml`, cada clave
